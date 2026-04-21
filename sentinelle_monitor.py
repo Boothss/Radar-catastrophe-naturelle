@@ -99,17 +99,20 @@ def envoyer_email(sujet, alertes):
     # ── HTML ──
     cards_html = ""
     for a in alertes:
+        # --- FIX : magnitude peut être un str "—" pour les incendies ---
+        mag = a["magnitude"]
+        mag_numerique = mag if isinstance(mag, (int, float)) else None
+
         if a["type"] == "TSUNAMI":
             accent = "#0056b3"
             bg     = "rgba(0,86,179,0.08)"
             icone  = "🌊"
             badge  = "DANGER TSUNAMI"
-        # APRÈS (corrigé)
-elif isinstance(a["magnitude"], (int, float)) and a["magnitude"] >= SEUIL_SEISME_MAJEUR:
+        elif mag_numerique is not None and mag_numerique >= SEUIL_SEISME_MAJEUR:
             accent = "#FF3B30"
             bg     = "rgba(255,59,48,0.08)"
             icone  = "🔴"
-            badge  = f"SÉISME MAJEUR M{a['magnitude']}"
+            badge  = f"SÉISME MAJEUR M{mag}"
         elif a["type"] == "INCENDIE":
             accent = "#FF6B35"
             bg     = "rgba(255,107,53,0.08)"
@@ -119,7 +122,7 @@ elif isinstance(a["magnitude"], (int, float)) and a["magnitude"] >= SEUIL_SEISME
             accent = "#F59E0B"
             bg     = "rgba(245,158,11,0.08)"
             icone  = "🟠"
-            badge = "SÉISME URBAIN M" + str(a['magnitude']) if a['magnitude'] != "—" else "SÉISME URBAIN"
+            badge  = f"SÉISME URBAIN M{mag}"
 
         ville_html = ""
         if a.get("ville"):
@@ -157,7 +160,7 @@ elif isinstance(a["magnitude"], (int, float)) and a["magnitude"] >= SEUIL_SEISME
               <td style="padding:5px 12px 5px 0;font-size:11px;color:#64748B;
                          font-family:monospace;white-space:nowrap;">MAGNITUDE</td>
               <td style="padding:5px 0;font-size:20px;font-weight:700;
-                         color:{accent};">{a['magnitude']}</td>
+                         color:{accent};">{mag}</td>
             </tr>
             <tr>
               <td style="padding:5px 12px 5px 0;font-size:11px;color:#64748B;
@@ -268,7 +271,12 @@ def analyser_seismes(memoire):
         if age_heures > AGE_MAX_HEURES:
             continue
 
-        magnitude     = prop.get("mag", 0)
+        # --- FIX : forcer magnitude en float ---
+        try:
+            magnitude = float(prop.get("mag") or 0)
+        except (TypeError, ValueError):
+            magnitude = 0.0
+
         lieu          = prop.get("place", "Lieu inconnu")
         alerte_tsunami = prop.get("tsunami", 0) == 1
         url_usgs      = prop.get("url", "")
