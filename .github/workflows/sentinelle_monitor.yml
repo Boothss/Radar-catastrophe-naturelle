@@ -1,0 +1,35 @@
+name: Sentinelle OSINT — Séismes & Tsunamis 24/7
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # toutes les 10 minutes, 24h/24
+  workflow_dispatch:           # permet aussi de lancer manuellement
+
+jobs:
+  check-seismes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests geopy
+
+      - name: Run Sentinelle
+        env:
+          EMAIL_EXPEDITEUR: ${{ secrets.EMAIL_EXPEDITEUR }}
+          EMAIL_PASSWORD:   ${{ secrets.EMAIL_PASSWORD }}
+        run: python sentinelle_monitor.py
+
+      - name: Sauvegarder la mémoire (seen_ids)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinelle-memoire
+          path: sentinelle_db.txt
+          retention-days: 30
+          overwrite: true
