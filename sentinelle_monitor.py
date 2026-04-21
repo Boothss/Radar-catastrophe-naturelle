@@ -104,7 +104,8 @@ def envoyer_email(sujet, alertes):
             bg     = "rgba(0,86,179,0.08)"
             icone  = "🌊"
             badge  = "DANGER TSUNAMI"
-        elif a["magnitude"] >= SEUIL_SEISME_MAJEUR:
+        # APRÈS (corrigé)
+elif isinstance(a["magnitude"], (int, float)) and a["magnitude"] >= SEUIL_SEISME_MAJEUR:
             accent = "#FF3B30"
             bg     = "rgba(255,59,48,0.08)"
             icone  = "🔴"
@@ -118,7 +119,7 @@ def envoyer_email(sujet, alertes):
             accent = "#F59E0B"
             bg     = "rgba(245,158,11,0.08)"
             icone  = "🟠"
-            badge  = f"SÉISME URBAIN M{a['magnitude']}"
+            badge = "SÉISME URBAIN M" + str(a['magnitude']) if a['magnitude'] != "—" else "SÉISME URBAIN"
 
         ville_html = ""
         if a.get("ville"):
