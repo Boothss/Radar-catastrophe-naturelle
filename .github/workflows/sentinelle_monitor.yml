@@ -5,6 +5,10 @@ on:
     - cron: '*/10 * * * *'   # toutes les 10 minutes, 24h/24
   workflow_dispatch:           # permet aussi de lancer manuellement
 
+# Permission nécessaire pour publier sur GitHub Pages
+permissions:
+  contents: write
+
 jobs:
   check-seismes:
     runs-on: ubuntu-latest
@@ -18,7 +22,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests geopy
+        run: pip install requests geopy folium
+
+      - name: Restaurer la mémoire (seen_ids)
+        uses: actions/download-artifact@v4
+        with:
+          name: sentinelle-memoire
+        continue-on-error: true   # pas de plantage au 1er lancement
 
       - name: Run Sentinelle
         env:
@@ -33,3 +43,11 @@ jobs:
           path: sentinelle_db.txt
           retention-days: 30
           overwrite: true
+
+      - name: Publier la carte sur GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./map_output    # dossier contenant la carte HTML
+          publish_branch: gh-pages
+          force_orphan: true           # garde gh-pages propre à chaque déploiement
